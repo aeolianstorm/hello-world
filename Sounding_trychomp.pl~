@@ -1,0 +1,214 @@
+#!/usr/bin/perl
+
+########################################################################
+#  
+# THIS PROGRAM WAS WRITTEN FOR STATISTICAL ANALYSIS OF WEATHER
+# EVENTS TO MEET CERTAIN CRITERIA. RIGHT NOW THE PROGRAM READS IN DATA
+# FROM A STATION AND IF IT MEETS BLZ CRITERIA...IT WRITES IT OUT TO
+# A TXT FILE THAT R STATS IS ABLE TO READ 
+#
+##
+#########  NOTE:  This program written specifically for CDO, NCDC data format for Simple version.  If you 
+# Pick any other data format, you will need to modify code just below the word chomp.
+######### NOTE:  Keep the commas for both the header, and $ variable output. While R can just read spaces,
+#  You will most likely encounter problems unless you use the comma separation form
+
+#######################################################################
+# Declare those variables! Avoid unknown errors!
+#######################################################################
+use File::Copy;
+
+# uncomment use strict if you add any variables.  This makes sure that you
+# have no spelling errors and variables with random values
+#use strict;
+
+my $PRES=0;
+my $HGHT=0;
+my $TEMP=0;
+my $DWPT=0;
+my $RELH=0;
+my $MIXR=0;
+my $DRCT=0;
+my $SKNT=0;
+my $THTA=0;
+my $THTE=0;
+my $THTV=0;
+
+
+my $YEAR = 0;
+my $MONTH =0;
+my $DAY = 0;
+my $GMT = 0;
+my $icount=0;
+my $line= 0;
+my @infile=();
+my @outfile=();
+
+##### For fun
+my $gsec= 0;
+my $gmin= 0;
+my $ghour=0;
+my $gday= 0;
+my $gmon= 0;
+my $gyear=0;
+my $gday =0;
+my $gwday =0;
+my $gmisdst=0;
+my $timenow=0;
+
+
+#########################################################################
+# THIS IS WHERE YOU SET YOUR FILE INPUT NAMES
+#########################################################################  
+
+
+#  This is where you set the name of your input file.  Should just be one file name
+@infile=("C1_1996_02_2300Z_pk.txt");
+#@infile=("PAMC_20081227_Case3.txt");
+
+# This is where you set the name of your output file. Can choose multiple files but not really needed
+# WILL BE EASIEST FOR OTHER CODE, IF YOUR FILE ENDS IN gsBLZout or BLZout but not necessary
+@outfile=("ttC1_1996_02_2300Z_pk.txt", "PADU_gsBLZout.txt");
+#@outfile=("Out19941111_Case01.txt", "PADU_gsBLZout.txt");
+
+#C1_1996_02_20_00Z_pk.txt
+# C1_1996_02_2300Z_pk.txt
+# C1_1994_11_1106Z_PK.txt
+#994_03_1800_pk(1).txt
+##########################################################################
+# For fun print the local time
+
+($gsec,$gmin,$ghour,$gday,$gmon,$gyear,$gday,$gwday,$gmisdst) = gmtime(time);
+$timenow = "$ghour:$gmin UTC on the day of the $gday th";
+print "The time is $timenow.\n Unlinking files. PL!\n" ;
+##########################################################################
+
+
+##########################################################################
+# List files being used. ** note: refer to a location in a matrix with the $, not @. 
+#  Indices start at 0. 
+
+print "The following files are being used: $infile[0], $outfile[0], and $outfile[1].\n"; 
+
+###########################################################################
+# Unlink the outfiles. This is important!  The append function is called below, so if
+# You do not unlink your output files, you will end up with one huge file
+###########################################################################
+
+unlink @outfile;
+
+
+
+######################################################################################
+# Open the old input file, and create new output files with the names set above
+######################################################################################
+
+
+open( CLIMIN,"$infile[0]") || die "you are absolutely silly inputfile is not here1: $!\n";
+open( CLIMOUT, ">>$outfile[0]")  || die "you are absolutely silly outPAAQ is not here2: $!\n";
+
+	#open( CLIMOUT, ">>$outfile[1]")  || die "you are absolutely silly outPAAQ is not here2: $!\n";
+
+
+#####################################################
+# i count tracks number of obs, set to zero up here.
+# i count is needed for R to work.
+#####################################################
+
+  $icount = 0;
+
+##############################################################
+# Print Heading to the output textfile
+##############################################################
+
+ print  CLIMOUT  "PRES, HGHT, TEMP, DWPT, RELH, MIXR, DRCT, SKNT, THTA, THTE, THTV \n" ;
+
+##############################################################
+# Begin to read in txt file and separate out
+##############################################################
+
+ while ($line = <CLIMIN>)
+ {
+  chomp;    # this program will not work without chomp!
+  ($PRES, $HGHT, $TEMP, $DWPT, $RELH, $MIXR, $DRCT, $SKNT, $THTA, $THTE, $THTV) = split ' ', $line;
+	print $PRES;
+	print "PtL";
+	
+	#$YEAR = substr($DATE, 0,4);
+	#$MONTH = substr($DATE, 4,2);
+	#$DAY = substr($DATE,6,2);
+	#$GMT = substr($DATE, -4 );
+	
+#######################################################################################	
+# NOTE:  a few other examples of what you could put here are at the end of this program	
+# NOTE: R STATS will not read in **** must replace it with NaN !
+# Begin to Increment number of obs up with icount
+#######################################################################################
+
+	if(($DRCT != '***') && ($DRCT <365) ){ 
+	#if(($GUST >= 35) && ($DIR != '***') && ($DIR <365) ){ 
+	#if(($DIR != '***') && ($DIR <365) ){ 	
+
+	# ($GUST >= 35)	&& 		 
+ 		
+		$icount = $icount + 1 ;
+		
+			
+			
+	       # if ($DWPF eq "****"){
+	    #	$DWPF = 'NaN';
+	   # 	} 
+	#	else {
+	# 	$DWPF = $DWPF;
+	# 	}    
+					
+		 	#}
+#######################################################################################################
+# Print out to the file you named CLIMOUT.  IF you wish to print to the screen, simply remove the CLIMO		
+#######################################################################################################
+
+		print CLIMOUT "$PRES, $HGHT, $TEMP, $DWPT, $RELH, $MIXR, $DRCT, $SKNT, $THTA, $THTE, $THTV \n" ;
+	 # "icount, DIR, SPD, GUST, TEMPF, DEWF, SLP, DATE
+	} # endif for GUST > 35 etc	
+    
+
+} # endwhile for reading in text file loophttps://www.buzzfeed.com/danielacadena/this-wild-geode-hair-trend-is-going-to-be-all-over?utm_term=.glW98x5elz#.fjD7Aj0JM5
+
+
+
+############################################## 
+# Close all files!
+##############################################
+
+close(CLIMIN);
+close(CLIMOUT);
+
+
+
+
+
+
+
+
+
+##################
+# Extra Code
+##################
+
+
+###############Possible if statements
+
+#if(($GUST >= 35) && ($VIS <= 0.5) && ((80<$WW1 && $WW1 >= 70) || ($WW1==38) || ($WW1==39) || ($WW1==68) || ($WW1==69) || ($WW1<=88 && $WW1>=83))){ 
+	#if(($VIS <= 0.5) && ($VIS != '***') && ($TEMPF <=40)){ 
+	
+
+
+## Besides the unlink command,  can make a directory for files to delete using this technique:
+#To start off, create a trash directory. Let's call it "trash". Then you can delete the file as follows:
+
+#rename "myfile.txt","trash/myfile.txt";
+
+#Better yet, assign a timestamp to the deleted file:
+
+#$timenow = time;
+#rename "myfile.txt","trash/$timenow.txt";
